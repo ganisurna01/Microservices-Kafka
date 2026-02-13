@@ -11,7 +11,8 @@ A practical guide to Apache Kafka with examples from this Ticketing app.
 3. [How Kafka Works](#how-kafka-works)
 4. [Core Concepts](#core-concepts)
 5. [Kafka Operations with Examples](#kafka-operations-with-examples)
-6. [Flow in This App](#flow-in-this-app)
+6. [End-to-End Example (Minimal)](#end-to-end-example-minimal)
+7. [Flow in This App](#flow-in-this-app)
 
 ---
 
@@ -325,6 +326,73 @@ const shutdown = async () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 ```
+
+---
+
+## End-to-End Example (Minimal)
+
+Generic Kafka usage with `kafkajs` – no app-specific wrapper. Run consumer first, then producer. The consumer will receive the message.
+
+**Producer (e.g. Orders service):**
+
+```javascript
+const { Kafka } = require("kafkajs");
+
+async function main() {
+  const kafka = new Kafka({
+    clientId: "producer-app",
+    brokers: ["localhost:9092"],
+  });
+
+  const producer = kafka.producer();
+  await producer.connect();
+
+  await producer.send({
+    topic: "orders",
+    messages: [
+      {
+        key: "order-1",
+        value: JSON.stringify({ type: "order.created", id: "order-1", ticketId: "ticket-1" }),
+      },
+    ],
+  });
+
+  console.log("Published order.created");
+  await producer.disconnect();
+}
+
+main();
+```
+
+**Consumer (e.g. Tickets service):**
+
+```javascript
+const { Kafka } = require("kafkajs");
+
+async function main() {
+  const kafka = new Kafka({
+    clientId: "consumer-app",
+    brokers: ["localhost:9092"],
+  });
+
+  const consumer = kafka.consumer({ groupId: "tickets-orders" });
+  await consumer.connect();
+  await consumer.subscribe({ topic: "orders", fromBeginning: true });
+
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      const data = JSON.parse(message.value.toString());
+      console.log("Consumed:", data);
+    },
+  });
+
+  console.log("Waiting for messages...");
+}
+
+main();
+```
+
+> **Note:** Kafka creates topics automatically when the producer first sends. Ensure Kafka is running (`docker-compose up -d`).
 
 ---
 
