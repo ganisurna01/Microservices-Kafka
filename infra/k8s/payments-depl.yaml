@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+        - name: payments
+          image: ganeshsurna/payments:latest
+          env:
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret  # created by ------> kubectl create secret generic jwt-secret --from-literal JWT_KEY=my-jwt-secret-key
+                  key: JWT_KEY
+            - name: STRIPE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret  # created by ------> kubectl create secret generic stripe-secret --from-literal STRIPE_KEY=<Stripe_Secret_Key>
+                  key: STRIPE_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              value: whsec_sOU7RHPHHiepAm3XfXZN8hrjbnZoeMed
+            - name: MONGODB_URI
+              value: 'mongodb://payments-mongo-srv:27017/payments' # payments db
+            - name: KAFKA_BROKERS
+              value: "kafka-srv:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: payments
+  ports:
+    - name: payments
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

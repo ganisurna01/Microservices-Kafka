@@ -1,0 +1,65 @@
+apiVersion: skaffold/v4beta12
+kind: Config
+manifests:
+  rawYaml:
+    - ./infra/k8s/*
+build:
+  local:
+    push: false
+  artifacts:
+    - image: ganeshsurna/auth
+      context: ./auth # folder relative path in our root project
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,ts,json}"
+            dest: .
+    - image: ganeshsurna/client
+      context: ./client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,jsx,ts,tsx,json}"
+            dest: .
+    - image: ganeshsurna/tickets
+      context: ./tickets
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,ts,json}"
+            dest: .
+    - image: ganeshsurna/orders
+      context: ./orders
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,ts,json}"
+            dest: .
+    - image: ganeshsurna/expiration
+      context: ./expiration
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,ts,json}"
+            dest: .
+    - image: ganeshsurna/payments
+      context: ./payments
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.{js,ts,json}"
+            dest: .
+    # - image: ganeshsurna/custom-rabbitmq-image
+    #   context: ./custom-rabbitmq-image
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "**/*.{js,ts,json}"
+    #         dest: .
